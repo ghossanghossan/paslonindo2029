@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Database Simulasi Pasangan Calon — Dasbor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --krem:#F6F0E1; --krem-tua:#ece2c8; --tinta:#2A1B12;
+    --merah:#9E1B32; --merah-tua:#74111F; --emas:#B8862B;
+    --nila:#2F4858; --hijau:#4B7157; --kertas:#FBF7EC;
+    --garis:rgba(42,27,18,0.14);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--krem); color:var(--tinta);
+    font-family:'Work Sans', sans-serif; line-height:1.5;
+    background-image:radial-gradient(circle at 1px 1px, rgba(42,27,18,0.07) 1px, transparent 0);
+    background-size:22px 22px;
+  }
+  .kawung{position:fixed; inset:0; z-index:-1; pointer-events:none; opacity:0.5;}
+  a{color:var(--merah-tua);}
+
+  header.peringatan{
+    background:var(--merah); color:var(--kertas); padding:10px 20px;
+    text-align:center; font-size:0.86rem; font-weight:500;
+  }
+  header.peringatan strong{font-weight:600;}
+
+  .wadah{max-width:1020px; margin:0 auto; padding:0 24px;}
+
+  .hero{padding:60px 0 36px; border-bottom:1px solid var(--garis);
+    display:flex; justify-content:space-between; gap:24px; flex-wrap:wrap;}
+  .hero-teks{flex:1; min-width:280px;}
+  .eyebrow{display:flex; align-items:center; gap:10px; font-size:0.82rem; color:var(--nila); margin-bottom:16px;}
+  .eyebrow .titik{width:8px;height:8px;border-radius:50%;background:var(--emas);}
+  h1{font-family:'Fraunces', serif; font-weight:600; font-size:clamp(2rem,4vw,2.9rem); line-height:1.08; margin:0 0 12px; max-width:16ch;}
+  .sub{font-size:1.02rem; color:#4a3a2c; max-width:54ch; margin:0 0 26px;}
+  .angka-besar{display:flex; gap:40px; flex-wrap:wrap;}
+  .angka-besar .item .n{font-family:'Fraunces', serif; font-size:2.1rem; font-weight:600; color:var(--merah-tua);}
+  .angka-besar .item .l{font-size:0.8rem; color:#6b5b48; margin-top:2px;}
+
+  .kontrol-edit{
+    display:flex; flex-direction:column; gap:10px; min-width:220px;
+    background:var(--kertas); border:1px solid var(--garis); border-radius:8px; padding:16px;
+  }
+  .kontrol-edit .judul{font-size:0.8rem; font-weight:600; color:var(--nila);}
+  button.tombol{
+    font-family:'Work Sans', sans-serif; font-size:0.86rem; font-weight:600;
+    padding:9px 14px; border-radius:6px; border:1px solid var(--tinta);
+    background:var(--tinta); color:var(--kertas); cursor:pointer;
+  }
+  button.tombol.aktif{background:var(--merah); border-color:var(--merah-tua);}
+  button.tombol.sekunder{background:transparent; color:var(--tinta);}
+  .status-edit{font-size:0.78rem; color:#6b5b48; min-height:16px;}
+
+  section{padding:46px 0;}
+  section + section{border-top:1px solid var(--garis);}
+  h2{font-family:'Fraunces', serif; font-size:1.4rem; font-weight:600; margin:0 0 6px;}
+  .keterangan-bagian{color:#6b5b48; font-size:0.9rem; margin:0 0 24px; max-width:60ch;}
+
+  /* Profil paslon */
+  .profil-grid{display:flex; gap:22px; flex-wrap:wrap;}
+  .kartu-paslon{
+    display:flex; align-items:center; gap:12px;
+    background:var(--kertas); border:1px solid var(--garis); border-radius:10px;
+    padding:12px 16px; min-width:220px;
+  }
+  .avatar{
+    width:52px; height:52px; border-radius:50%; flex-shrink:0;
+    display:flex; align-items:center; justify-content:center;
+    color:var(--kertas); font-family:'Fraunces', serif; font-weight:600; font-size:1.1rem;
+    background-size:cover; background-position:center; position:relative; overflow:hidden;
+  }
+  .avatar::after{
+    content:""; position:absolute; inset:0; border-radius:50%;
+    box-shadow:inset 0 0 0 2px rgba(255,255,255,0.35);
+  }
+  .kartu-paslon .nama{font-weight:600; font-size:0.92rem;}
+  .kartu-paslon .angka{font-size:0.8rem; color:#6b5b48;}
+
+  /* Peta */
+  .peta-wadah{display:flex; gap:28px; flex-wrap:wrap; align-items:flex-start;}
+  .peta-svg{flex:1; min-width:300px;}
+  .peta-svg svg{width:100%; height:auto; display:block;}
+  .pulau{cursor:pointer; stroke:var(--tinta); stroke-width:1; stroke-opacity:0.25; transition:opacity 0.15s;}
+  .pulau:hover{stroke-opacity:0.6;}
+  .panel-info{
+    width:240px; background:var(--kertas); border:1px solid var(--garis);
+    border-radius:10px; padding:16px; font-size:0.86rem;
+  }
+  .panel-info .nama-w{font-family:'Fraunces', serif; font-weight:600; font-size:1.05rem; margin-bottom:10px;}
+  .panel-info .baris-p{display:flex; justify-content:space-between; padding:4px 0; border-bottom:1px dashed var(--garis);}
+  .catatan-peta{font-size:0.78rem; color:#8a7a64; margin-top:10px;}
+
+  /* Grafik batang */
+  .grafik{display:flex; flex-direction:column; gap:16px;}
+  .baris-grafik{display:grid; grid-template-columns:150px 1fr; gap:14px; align-items:center;}
+  .nama-wilayah{font-size:0.9rem; font-weight:500;}
+  .batang-tumpuk{display:flex; height:26px; border-radius:4px; overflow:hidden; background:var(--krem-tua);}
+  .segmen{height:100%; transition:width 0.6s ease;}
+  .legenda{display:flex; flex-wrap:wrap; gap:18px; margin-top:24px; font-size:0.84rem;}
+  .legenda .butir{display:flex; align-items:center; gap:7px;}
+  .legenda .kotak{width:11px; height:11px; border-radius:2px;}
+
+  /* Tabel */
+  table{width:100%; border-collapse:collapse; font-size:0.9rem;}
+  thead th{text-align:left; font-weight:600; font-size:0.78rem; color:#5c4c3a; border-bottom:2px solid var(--tinta); padding:10px 8px;}
+  tbody td{padding:9px 8px; border-bottom:1px solid var(--garis);}
+  tbody tr:last-child{font-weight:600; background:var(--krem-tua);}
+  tbody td:first-child, thead th:first-child{padding-left:0;}
+  td.angka, th.angka{text-align:right; font-variant-numeric:tabular-nums;}
+  td.angka input{
+    width:78px; text-align:right; font:inherit; padding:5px 6px;
+    border:1px solid var(--emas); border-radius:4px; background:#fff;
+  }
+
+  footer{padding:36px 0 60px; font-size:0.84rem; color:#6b5b48;}
+  footer .catatan-list{margin:14px 0 0; padding-left:18px;}
+  footer .catatan-list li{margin-bottom:6px;}
+  .status-sumber{margin-top:8px; font-size:0.78rem; color:#8a7a64;}
+
+  @media (max-width:640px){
+    .baris-grafik{grid-template-columns:96px 1fr;}
+    .angka-besar{gap:26px;}
+    .peta-wadah{flex-direction:column;}
+    .panel-info{width:100%;}
+  }
+</style>
+</head>
+<body>
+
+<svg class="kawung" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <pattern id="kawungPattern" width="80" height="80" patternUnits="userSpaceOnUse">
+      <g fill="none" stroke="#2A1B12" stroke-opacity="0.045" stroke-width="1.2">
+        <ellipse cx="20" cy="20" rx="16" ry="10"/>
+        <ellipse cx="20" cy="20" rx="16" ry="10" transform="rotate(90 20 20)"/>
+        <ellipse cx="60" cy="60" rx="16" ry="10"/>
+        <ellipse cx="60" cy="60" rx="16" ry="10" transform="rotate(90 60 60)"/>
+      </g>
+    </pattern>
+  </defs>
+  <rect width="100%" height="100%" fill="url(#kawungPattern)"/>
+</svg>
+
+<header class="peringatan">
+  <strong>Data simulasi / fiktif</strong> — bukan hasil survei, quick count, exit poll, atau prediksi Pemilu. Dibuat khusus untuk pengujian sistem database.
+</header>
+
+<div class="wadah">
+  <div class="hero">
+    <div class="hero-teks">
+      <div class="eyebrow"><span class="titik"></span> Dasbor pengujian data</div>
+      <h1>Database Simulasi Pasangan Calon</h1>
+      <p class="sub">Rekap responden simulasi per wilayah di Indonesia. Data bisa diedit langsung dari halaman ini dan otomatis tersimpan kembali ke Google Sheets lewat Apps Script.</p>
+      <div class="angka-besar">
+        <div class="item"><div class="n" id="totalResponden">—</div><div class="l">Total responden</div></div>
+        <div class="item"><div class="n" id="totalWilayah">—</div><div class="l">Wilayah</div></div>
+        <div class="item"><div class="n" id="totalPilihan">—</div><div class="l">Pasangan</div></div>
+      </div>
+    </div>
+    <div class="kontrol-edit">
+      <div class="judul">Mode edit</div>
+      <button class="tombol" id="tombolEdit">Aktifkan mode edit</button>
+      <button class="tombol sekunder" id="tombolMuatUlang">Muat ulang data</button>
+      <div class="status-edit" id="statusEdit"></div>
+    </div>
+  </div>
+
+  <section>
+    <h2>Profil pasangan</h2>
+    <p class="keterangan-bagian">Avatar pakai inisial secara default. Isi kolom FotoURL di sheet "Paslon" kalau mau pasang gambar sendiri.</p>
+    <div class="profil-grid" id="profilGrid"></div>
+  </section>
+
+  <section>
+    <h2>Peta sebaran wilayah</h2>
+    <p class="keterangan-bagian">Warna pulau mengikuti pasangan dengan responden terbanyak di wilayah itu; makin pekat warnanya, makin besar jumlah respondennya. Arahkan kursor atau klik pulau untuk detail.</p>
+    <div class="peta-wadah">
+      <div class="peta-svg" id="petaSvgWadah"></div>
+      <div class="panel-info" id="panelInfo">
+        <div class="nama-w">Pilih wilayah</div>
+        <div style="color:#8a7a64;">Arahkan kursor ke salah satu pulau di peta.</div>
+      </div>
+    </div>
+    <p class="catatan-peta">Peta digambar stilasi untuk visualisasi, bukan peta batas wilayah administratif yang akurat.</p>
+  </section>
+
+  <section>
+    <h2>Sebaran per wilayah</h2>
+    <div class="grafik" id="grafik"></div>
+    <div class="legenda" id="legenda"></div>
+  </section>
+
+  <section>
+    <h2>Tabel data</h2>
+    <p class="keterangan-bagian" id="ketTabel">Aktifkan mode edit untuk mengubah angka langsung dari tabel ini.</p>
+    <div style="overflow-x:auto;">
+      <table id="tabel">
+        <thead><tr id="tabelHead"></tr></thead>
+        <tbody id="tabelBody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <footer>
+    <strong>Catatan sumber data</strong>
+    <ul class="catatan-list" id="catatanList"></ul>
+    <div class="status-sumber" id="statusSumber">Memuat data…</div>
+  </footer>
+</div>
+
+<script>
+/* ====== Konfigurasi ======
+   Ganti dengan URL Aplikasi Web Apps Script kamu (.../exec) agar dasbor
+   membaca DAN menulis balik ke Google Sheets. Kalau dikosongkan, dasbor
+   memakai data cadangan offline dan mode edit dinonaktifkan. */
+const API_URL = ""; // contoh: "https://script.google.com/macros/s/XXXXXXXX/exec"
+
+const WARNA_PILIHAN = ["#9E1B32", "#2F4858", "#B8862B", "#4B7157"];
+
+const DATA_CADANGAN = {
+  pilihan: ["Purbaya–Sherly", "Prabowo–Gibran", "Arif–Toha", "Belum Menentukan"],
+  wilayah: [
+    {"Wilayah":"Sumatra","Purbaya–Sherly":720,"Prabowo–Gibran":1080,"Arif–Toha":510,"Belum Menentukan":190,"Total Responden":2500},
+    {"Wilayah":"Jawa","Purbaya–Sherly":1020,"Prabowo–Gibran":1470,"Arif–Toha":750,"Belum Menentukan":260,"Total Responden":3500},
+    {"Wilayah":"Kalimantan","Purbaya–Sherly":310,"Prabowo–Gibran":510,"Arif–Toha":290,"Belum Menentukan":90,"Total Responden":1200},
+    {"Wilayah":"Sulawesi","Purbaya–Sherly":270,"Prabowo–Gibran":420,"Arif–Toha":230,"Belum Menentukan":80,"Total Responden":1000},
+    {"Wilayah":"Bali & Nusa Tenggara","Purbaya–Sherly":170,"Prabowo–Gibran":260,"Arif–Toha":160,"Belum Menentukan":60,"Total Responden":650},
+    {"Wilayah":"Maluku","Purbaya–Sherly":90,"Prabowo–Gibran":140,"Arif–Toha":85,"Belum Menentukan":35,"Total Responden":350},
+    {"Wilayah":"Papua","Purbaya–Sherly":120,"Prabowo–Gibran":200,"Arif–Toha":150,"Belum Menentukan":40,"Total Responden":510}
+  ],
+  totalResponden: 9710,
+  profil: [],
+  catatan: [
+    "Data bersifat simulasi/fiktif untuk pengujian database.",
+    "Bukan hasil survei, quick count, exit poll, atau prediksi Pemilu.",
+    "Kolom pilihan berisi jumlah responden per wilayah.",
+    "Total per wilayah merupakan penjumlahan seluruh kategori."
+  ]
+};
+
+// Path pulau stilasi (bukan peta akurat) diposisikan mengikuti letak geografis kasar.
+const PATH_PULAU = {
+  "sumatra": "M60,40 C95,20 135,30 152,68 C170,108 162,158 140,202 C120,240 88,262 68,230 C48,198 40,150 45,98 C48,74 50,54 60,40 Z",
+  "jawa": "M150,292 C222,276 302,279 362,292 C382,296 382,308 362,312 C302,324 222,322 150,310 C138,306 138,296 150,292 Z",
+  "kalimantan": "M300,68 C362,48 422,58 452,110 C472,146 460,192 430,216 C390,246 328,236 300,200 C274,168 274,108 300,68 Z",
+  "sulawesi": "M525,92 C542,74 562,86 558,110 C576,128 602,120 606,146 C610,170 592,186 572,176 C578,200 562,220 542,210 C548,234 522,244 512,220 C496,230 480,214 492,196 C472,190 468,164 488,156 C478,136 492,116 512,122 C506,102 512,86 525,92 Z",
+  "bali-nusa-tenggara": "M370,300 C385,296 396,300 396,308 C396,316 385,320 370,316 C360,314 360,302 370,300 Z M405,304 C416,300 426,304 426,311 C426,318 416,322 405,318 C397,316 397,306 405,304 Z M436,306 C445,303 454,306 454,312 C454,318 445,321 436,318 C430,316 430,308 436,306 Z M465,308 C473,305 481,308 481,314 C481,320 473,323 465,320 C460,318 460,310 465,308 Z",
+  "maluku": "M600,150 C610,142 622,146 622,156 C622,166 610,170 600,164 C595,160 595,154 600,150 Z M635,175 C646,168 658,172 658,182 C658,192 646,196 635,190 C629,186 629,179 635,175 Z M615,205 C624,199 634,202 634,211 C634,220 624,223 615,218 C610,215 610,209 615,205 Z M650,215 C660,209 671,212 671,221 C671,230 660,233 650,228 C645,225 645,219 650,215 Z",
+  "papua": "M650,80 C700,48 782,54 822,90 C862,122 872,172 850,212 C828,252 778,272 738,256 C698,240 668,210 654,172 C644,140 644,106 650,80 Z"
+};
+const LABEL_POS = {
+  "sumatra": [70,150], "jawa": [255,340], "kalimantan": [365,150],
+  "sulawesi": [545,155], "bali-nusa-tenggara": [420,335], "maluku": [635,235], "papua": [745,175]
+};
+
+let editToken = "";
+let modeEdit = false;
+let dataTerkini = null;
+
+function idKan(nama){
+  return nama.toLowerCase()
+    .replace(/&/g,'')
+    .replace(/[^a-z0-9]+/g,'-')
+    .replace(/^-+|-+$/g,'');
+}
+function inisial(nama){
+  return nama.split(/[–\-\s]+/).filter(Boolean).map(w=>w[0]).join('').slice(0,3).toUpperCase();
+}
+
+async function ambilData(){
+  if(API_URL){
+    try{
+      const res = await fetch(API_URL + "?action=summary");
+      const json = await res.json();
+      if(json.status === "ok") return { data: json, sumber: "Google Sheets (langsung)" };
+    }catch(e){ /* jatuh ke data cadangan */ }
+  }
+  return { data: DATA_CADANGAN, sumber: "Data cadangan tersimpan (offline)" };
+}
+
+async function kirimUpdate(wilayah, kolom, nilai){
+  const res = await fetch(API_URL, {
+    method: "POST",
+    body: JSON.stringify({ action: "update", token: editToken, wilayah, kolom, nilai })
+  });
+  return res.json();
+}
+
+function pemenang(w, pilihan){
+  let terbaik = pilihan[0], nilaiTerbaik = -1;
+  pilihan.forEach(p => { if(Number(w[p]) > nilaiTerbaik){ nilaiTerbaik = Number(w[p]); terbaik = p; } });
+  return terbaik;
+}
+
+function render(data, sumber){
+  dataTerkini = data;
+  document.getElementById("totalResponden").textContent = data.totalResponden.toLocaleString("id-ID");
+  document.getElementById("totalWilayah").textContent = data.wilayah.length;
+  document.getElementById("totalPilihan").textContent = data.pilihan.length;
+  document.getElementById("statusSumber").textContent = "Sumber: " + sumber;
+
+  renderProfil(data);
+  renderPeta(data);
+  renderGrafik(data);
+  renderTabel(data);
+  renderCatatan(data);
+}
+
+function renderProfil(data){
+  const grid = document.getElementById("profilGrid");
+  grid.innerHTML = "";
+  const profilMap = {};
+  (data.profil || []).forEach(p => profilMap[p.pasangan] = p.fotoUrl);
+
+  data.pilihan.forEach((p, i) => {
+    const total = data.totals[p] || 0;
+    const kartu = document.createElement("div");
+    kartu.className = "kartu-paslon";
+    const foto = profilMap[p];
+    const avatar = document.createElement("div");
+    avatar.className = "avatar";
+    if(foto){
+      avatar.style.backgroundImage = "url('" + foto + "')";
+    } else {
+      avatar.style.background = WARNA_PILIHAN[i % WARNA_PILIHAN.length];
+      avatar.textContent = inisial(p);
+    }
+    const teks = document.createElement("div");
+    teks.innerHTML = '<div class="nama">' + p + '</div><div class="angka">' + total.toLocaleString("id-ID") + ' responden</div>';
+    kartu.appendChild(avatar);
+    kartu.appendChild(teks);
+    grid.appendChild(kartu);
+  });
+}
+
+function renderPeta(data){
+  const wadah = document.getElementById("petaSvgWadah");
+  const maxTotal = Math.max(...data.wilayah.map(w => Number(w["Total Responden"]) || 0));
+
+  let svg = '<svg viewBox="0 0 900 380" xmlns="http://www.w3.org/2000/svg">';
+  data.wilayah.forEach(w => {
+    const id = idKan(w["Wilayah"]);
+    const path = PATH_PULAU[id];
+    if(!path) return;
+    const menang = pemenang(w, data.pilihan);
+    const idxWarna = data.pilihan.indexOf(menang);
+    const warna = WARNA_PILIHAN[idxWarna % WARNA_PILIHAN.length];
+    const total = Number(w["Total Responden"]) || 0;
+    const opasitas = 0.35 + 0.55 * (maxTotal ? total / maxTotal : 0);
+    svg += '<path class="pulau" data-wilayah="' + w["Wilayah"] + '" d="' + path + '" fill="' + warna + '" fill-opacity="' + opasitas.toFixed(2) + '"><title>' + w["Wilayah"] + ': ' + total.toLocaleString("id-ID") + ' responden</title></path>';
+    const pos = LABEL_POS[id];
+    if(pos){
+      svg += '<text x="' + pos[0] + '" y="' + pos[1] + '" font-size="11" font-family="Work Sans, sans-serif" fill="#2A1B12" fill-opacity="0.7" text-anchor="middle">' + w["Wilayah"].split(' ')[0] + '</text>';
+    }
+  });
+  svg += '</svg>';
+  wadah.innerHTML = svg;
+
+  wadah.querySelectorAll(".pulau").forEach(el => {
+    el.addEventListener("mouseenter", () => tampilkanPanel(el.dataset.wilayah));
+    el.addEventListener("click", () => tampilkanPanel(el.dataset.wilayah));
+  });
+}
+
+function tampilkanPanel(namaWilayah){
+  const data = dataTerkini;
+  const w = data.wilayah.find(x => x["Wilayah"] === namaWilayah);
+  if(!w) return;
+  const panel = document.getElementById("panelInfo");
+  let html = '<div class="nama-w">' + namaWilayah + '</div>';
+  data.pilihan.forEach(p => {
+    html += '<div class="baris-p"><span>' + p + '</span><span>' + Number(w[p]).toLocaleString("id-ID") + '</span></div>';
+  });
+  html += '<div class="baris-p" style="border-bottom:none; font-weight:600;"><span>Total</span><span>' + Number(w["Total Responden"]).toLocaleString("id-ID") + '</span></div>';
+  panel.innerHTML = html;
+}
+
+function renderGrafik(data){
+  const grafik = document.getElementById("grafik");
+  grafik.innerHTML = "";
+  data.wilayah.forEach(w => {
+    const total = w["Total Responden"];
+    const baris = document.createElement("div");
+    baris.className = "baris-grafik";
+    const nama = document.createElement("div");
+    nama.className = "nama-wilayah";
+    nama.textContent = w["Wilayah"];
+    const batang = document.createElement("div");
+    batang.className = "batang-tumpuk";
+    data.pilihan.forEach((p, i) => {
+      const seg = document.createElement("div");
+      seg.className = "segmen";
+      const pct = total ? (w[p] / total * 100) : 0;
+      seg.style.width = pct + "%";
+      seg.style.background = WARNA_PILIHAN[i % WARNA_PILIHAN.length];
+      seg.title = p + ": " + w[p].toLocaleString("id-ID");
+      batang.appendChild(seg);
+    });
+    baris.appendChild(nama);
+    baris.appendChild(batang);
+    grafik.appendChild(baris);
+  });
+
+  const legenda = document.getElementById("legenda");
+  legenda.innerHTML = "";
+  data.pilihan.forEach((p, i) => {
+    const butir = document.createElement("div");
+    butir.className = "butir";
+    butir.innerHTML = '<span class="kotak" style="background:' + WARNA_PILIHAN[i % WARNA_PILIHAN.length] + '"></span>' + p;
+    legenda.appendChild(butir);
+  });
+}
+
+function renderTabel(data){
+  const head = document.getElementById("tabelHead");
+  head.innerHTML = "";
+  const kolom = ["Wilayah", ...data.pilihan, "Total Responden"];
+  kolom.forEach(k => {
+    const th = document.createElement("th");
+    th.textContent = k;
+    if(k !== "Wilayah") th.className = "angka";
+    head.appendChild(th);
+  });
+
+  const body = document.getElementById("tabelBody");
+  body.innerHTML = "";
+  data.wilayah.forEach(w => {
+    const tr = document.createElement("tr");
+    kolom.forEach(k => {
+      const td = document.createElement("td");
+      if(k === "Wilayah"){
+        td.textContent = w[k];
+      } else if(k === "Total Responden"){
+        td.textContent = Number(w[k]).toLocaleString("id-ID");
+        td.className = "angka";
+      } else {
+        td.className = "angka";
+        if(modeEdit && API_URL){
+          const input = document.createElement("input");
+          input.type = "number";
+          input.min = "0";
+          input.value = w[k];
+          input.addEventListener("change", () => simpanSel(w["Wilayah"], k, input));
+          td.appendChild(input);
+        } else {
+          td.textContent = Number(w[k]).toLocaleString("id-ID");
+        }
+      }
+      tr.appendChild(td);
+    });
+    body.appendChild(tr);
+  });
+
+  const trTotal = document.createElement("tr");
+  kolom.forEach(k => {
+    const td = document.createElement("td");
+    if(k === "Wilayah"){ td.textContent = "TOTAL"; }
+    else{
+      const jumlah = k === "Total Responden" ? data.totalResponden : data.wilayah.reduce((s,w)=>s+Number(w[k]),0);
+      td.textContent = jumlah.toLocaleString("id-ID");
+      td.className = "angka";
+    }
+    trTotal.appendChild(td);
+  });
+  body.appendChild(trTotal);
+}
+
+function renderCatatan(data){
+  const list = document.getElementById("catatanList");
+  list.innerHTML = "";
+  (data.catatan && data.catatan.length ? data.catatan : DATA_CADANGAN.catatan).forEach(c => {
+    const li = document.createElement("li");
+    li.textContent = c;
+    list.appendChild(li);
+  });
+}
+
+async function simpanSel(wilayah, kolom, input){
+  const nilaiBaru = Number(input.value);
+  const status = document.getElementById("statusEdit");
+  status.textContent = "Menyimpan ke Google Sheets…";
+  try{
+    const hasil = await kirimUpdate(wilayah, kolom, nilaiBaru);
+    if(hasil.status !== "ok") throw new Error(hasil.message || "Gagal menyimpan.");
+    status.textContent = "Tersimpan ✓ — memuat ulang…";
+    const { data, sumber } = await ambilData();
+    render(data, sumber);
+    document.getElementById("statusEdit").textContent = "Tersimpan ke Google Sheets ✓";
+  }catch(err){
+    status.textContent = "Gagal menyimpan: " + err.message;
+  }
+}
+
+document.getElementById("tombolEdit").addEventListener("click", () => {
+  if(!API_URL){
+    document.getElementById("statusEdit").textContent = "Isi API_URL Apps Script dulu di index.html supaya bisa mengedit.";
+    return;
+  }
+  if(!modeEdit){
+    const token = prompt("Masukkan token edit (diset di Script Properties Apps Script):");
+    if(!token) return;
+    editToken = token;
+    modeEdit = true;
+    document.getElementById("tombolEdit").textContent = "Matikan mode edit";
+    document.getElementById("tombolEdit").classList.add("aktif");
+    document.getElementById("ketTabel").textContent = "Mode edit aktif — ubah angka lalu klik di luar sel untuk menyimpan.";
+  } else {
+    modeEdit = false;
+    editToken = "";
+    document.getElementById("tombolEdit").textContent = "Aktifkan mode edit";
+    document.getElementById("tombolEdit").classList.remove("aktif");
+    document.getElementById("ketTabel").textContent = "Aktifkan mode edit untuk mengubah angka langsung dari tabel ini.";
+  }
+  renderTabel(dataTerkini);
+});
+
+document.getElementById("tombolMuatUlang").addEventListener("click", async () => {
+  document.getElementById("statusEdit").textContent = "Memuat ulang…";
+  const { data, sumber } = await ambilData();
+  render(data, sumber);
+  document.getElementById("statusEdit").textContent = "Data terbaru dimuat.";
+});
+
+ambilData().then(({data, sumber}) => render(data, sumber));
+</script>
+</body>
+</html>
